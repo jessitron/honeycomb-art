@@ -7,11 +7,19 @@ OpenTelemetry::SDK.configure do |c|
   print "Configuring open telemetry\n"
 end
 
-input = <<EOF
- XXXx 
-X    X
- XXXx 
-      
+input = <<'EOF'
+              \     /
+          \    o ^ o    /
+            \ (     ) /
+ ____________(%%%%%%%)____________
+(     /   /  )%%%%%%%(  \   \     )
+(___/___/__/           \__\___\___)
+   (     /  /(%%%%%%%)\  \     )
+    (__/___/ (%%%%%%%) \___\__)
+            /(       )\
+          /   (%%%%%)   \
+               (%%%)
+                 !
 EOF
 
 lines = input.lines
@@ -52,7 +60,7 @@ tracer.in_span("root span", kind: :server, start_timestamp: go) do |root_span|
     pp attrs
     s.finish()
   end 
-  puts "This created trace #{root_span.to_span_data.hex_trace_id}"
+  puts "This created trace #{root_span.to_span_data.hex_trace_id} with #{span_attribute_sets.length} spans"
 end
 
 # maybe wait around for it to send?
