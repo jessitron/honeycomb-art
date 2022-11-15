@@ -7,6 +7,13 @@ OpenTelemetry::SDK.configure do |c|
   print "Configuring open telemetry\n"
 end
 
+input = <<EOF
+ XXXX 
+ X  X 
+ XXXX 
+      
+EOF
+
 # now go
 
 tracer = OpenTelemetry.tracer_provider.tracer('paint')
