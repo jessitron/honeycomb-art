@@ -1,9 +1,5 @@
 print "hello!\n"
 
-require "securerandom"
-run_id = SecureRandom.uuid
-puts "The run ID is #{run_id}"
-
 # configure
 require 'opentelemetry/sdk'
 require 'opentelemetry/exporter/otlp'
@@ -18,7 +14,11 @@ X    X
       
 EOF
 
-characters = input.lines.map.with_index { |l, y| 
+lines = input.lines
+numLines = lines.length
+numChars = lines.map { |l| l.length }.max
+puts "How many chars in a line? #{numChars}"
+characters = lines.map.with_index { |l, y| 
   l.chomp.chars.map.with_index { |c, x|
     { x: x, y: y, char: c }
   }
@@ -28,22 +28,34 @@ events = characters.filter { |c| c[:char] != " " }
 
 pp events
 
+span_attribute_sets = events.map { |e| 
+  how_many = e[:char] =~ /[A-Z]/ ? 5 : 1
+  one_span = {"character" => e[:char],
+   "time_incr" => numChars - e[:x],
+   "height" => numLines - e[:y],
+  }
+  Array.new(how_many) { one_span }
+}.flatten
 
+pp span_attribute_sets
 # now go
 
+go = Time.now()
+
+pp go
+
 tracer = OpenTelemetry.tracer_provider.tracer('paint')
-tracer.in_root_span("root span", kind: :server) do |root_span| 
-  tracer.start_span("boogers", kind: :server, attributes: { "coolness" => 90 }).finish()
-  tracer.in_span("noodles", kind: :server, attributes: { "coolness" => 98 }) do |span|
-    # ... cool stuff
-  end
-  tracer.in_span("noodles", kind: :server, attributes: { "coolness" => 97 }) do |span|
-    # ... cool stuff
-  end
+tracer.in_span("root span", kind: :server, start_timestamp: go) do |root_span| 
+  span_attribute_sets.each do |attrs|
+    start_at = go - attrs["time_incr"]
+    s = tracer.start_span("make an #{attrs["character"]}", start_timestamp: start_at, attributes: attrs)
+    pp attrs
+    s.finish()
+  end 
   puts "This created trace #{root_span.to_span_data.hex_trace_id}"
 end
 
 # maybe wait around for it to send?
 puts "Chilling out, hope it sends the batched events"
 sleep 10
-puts "Good bye from #{run_id}"
+puts "Good bye"
